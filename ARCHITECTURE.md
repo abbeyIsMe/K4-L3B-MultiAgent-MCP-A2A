@@ -7,6 +7,10 @@ Team phải cập nhật tài liệu này cùng source. Mục tiêu là mô tả
 Kiến trúc phối hợp đa tác tử (A2A) — luồng từ User Request qua Coordinator/Router, phân phối tới các Specialist Agent, thu thập Evidence qua MCP, tổng hợp tại Policy Agent, kiểm chứng tại Verifier và xuất kết quả cuối cùng.
 
 ```
+## System Overview
+
+Kiến trúc phối hợp đa tác tử (A2A) — luồng từ User Request qua Coordinator/Router, phân phối tới các Specialist Agent, thu thập Evidence qua MCP, tổng hợp tại Policy Agent, kiểm chứng tại Verifier và xuất kết quả cuối cùng.
+
 ```mermaid
 flowchart TD
     USER(["🧑 User / Client"])
