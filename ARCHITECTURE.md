@@ -7,24 +7,25 @@ Team phải cập nhật tài liệu này cùng source. Mục tiêu là mô tả
 Kiến trúc phối hợp đa tác tử (A2A) — luồng từ User Request qua Coordinator/Router, phân phối tới các Specialist Agent, thu thập Evidence qua MCP, tổng hợp tại Policy Agent, kiểm chứng tại Verifier và xuất kết quả cuối cùng.
 
 ```
+```mermaid
 flowchart TD
     USER(["🧑 User / Client"])
-    ENTITY["🔍 Entity Resolver\n(candidate ranking, confidence threshold)"]
-    COORD["🎯 Coordinator / Router\n(A2A Handoff, case_id correlation)"]
+    ENTITY["🔍 Entity Resolver<br/>(candidate ranking, confidence threshold)"]
+    COORD["🎯 Coordinator / Router<br/>(A2A Handoff, case_id correlation)"]
 
-    subgraph SPECIALISTS ["⚙️  Specialist Agents"]
-        ORDER["📦 Order / Item Agent\n─────────────────\n• Lookup order status\n• Validate line items\n• Emit order_evidence"]
-        PAYMENT["💳 Payment Agent\n─────────────────\n• Verify transactions\n• Check refund eligibility\n• Emit payment_evidence"]
-        SHIPMENT["🚚 Shipment Agent\n─────────────────\n• Track shipment\n• Validate delivery proof\n• Emit shipment_evidence"]
+    subgraph SPECIALISTS ["⚙️ Specialist Agents"]
+        ORDER["📦 Order / Item Agent<br/>─────────────────<br/>• Lookup order status<br/>• Validate line items<br/>• Emit order_evidence"]
+        PAYMENT["💳 Payment Agent<br/>─────────────────<br/>• Verify transactions<br/>• Check refund eligibility<br/>• Emit payment_evidence"]
+        SHIPMENT["🚚 Shipment Agent<br/>─────────────────<br/>• Track shipment<br/>• Validate delivery proof<br/>• Emit shipment_evidence"]
     end
 
-    MCP[["🗄️ MCP Evidence Collector\n(validate MCP response, store evidence_ref,\nemit tool_result_consumed)"]]
+    MCP[["🗄️ MCP Evidence Collector<br/>(validate MCP response, store evidence_ref,<br/>emit tool_result_consumed)"]]
 
-    POLICY["📜 Policy Agent\n─────────────────\n• Apply business rules\n• Resolve source conflicts\n• Select authoritative evidence"]
+    POLICY["📜 Policy Agent<br/>─────────────────<br/>• Apply business rules<br/>• Resolve source conflicts<br/>• Select authoritative evidence"]
 
-    VERIFIER["✅ Verifier Agent\n─────────────────\n• Schema validation\n• Entity scope check\n• Claim linkage & timeline\n• Confidence bounds"]
+    VERIFIER["✅ Verifier Agent<br/>─────────────────<br/>• Schema validation<br/>• Entity scope check<br/>• Claim linkage & timeline<br/>• Confidence bounds"]
 
-    OUTPUT(["📤 Validated Output\n(structured result + trace)"])
+    OUTPUT(["📤 Validated Output<br/>(structured result + trace)"])
 
     %% Main flow
     USER -->|"request + context"| ENTITY
@@ -43,7 +44,7 @@ flowchart TD
     VERIFIER -->|"validated result"| OUTPUT
 
     %% Feedback / retry paths
-    VERIFIER -. "invariant violation → re-investigate" .-> COORD
+    VERIFIER -.->|"invariant violation → re-investigate"| COORD
 
     %% Styling
     classDef agent fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#e2e8f0,rx:8
@@ -54,6 +55,7 @@ flowchart TD
     class ORDER,PAYMENT,SHIPMENT,POLICY,VERIFIER,COORD,ENTITY agent
     class MCP infra
     class USER,OUTPUT io
+```
 ```
 
 ### Luồng dữ liệu chính
