@@ -31,14 +31,14 @@ Vẽ hoặc mô tả luồng từ input/candidate resolution đến MCP investig
 
 | Actor | Input | Trách nhiệm | Tool permission | Output/handoff |
 | --- | --- | --- | --- | --- |
-| Entity/customer | TODO | TODO | TODO | TODO |
-| Coordinator | TODO | TODO | TODO | TODO |
-| Order/product | TODO | TODO | TODO | TODO |
-| Shipment | TODO | TODO | TODO | TODO |
-| Payment/refund | TODO | TODO | TODO | TODO |
-| Policy | TODO | TODO | TODO | TODO |
-| Conflict resolver | TODO | TODO | TODO | TODO |
-| Verifier | TODO | TODO | TODO | TODO |
+| Entity/customer | claimed_order_id, candidate_order_ids, customer_unique_id_hint | Xác minh candidate nào là order thật; lấy lịch sử khách hàng để cross-check | get_order, get_customer_history | entity_resolution, customer_context → Coordinator |
+| Coordinator | case, kết quả các specialist | Điều phối handoff, gộp kết quả theo case_id, không tự suy luận nghiệp vụ | (không gọi MCP trực tiếp) | Gọi Policy Agent, Verifier; tổng hợp output cuối |
+| Order/product | resolved_order_id | Lấy trạng thái đơn hàng, danh sách item, seller, thông tin sản phẩm | get_order, get_order_items, get_product_context, get_sellers | affected_entities.item_ids/seller_ids → Coordinator, Policy Agent |
+| Shipment | resolved_order_id | Xác định shipment_analysis.verdict (on_time/seller_delay/logistics_delay/lost/returned) dựa trên mốc thời gian giao/nhận | get_shipment_summary | 	shipment_analysis → Coordinator, Policy Agent |
+| Payment/refund | resolved_order_id | 	Đối chiếu capture/refund, tính captured/refunded/refundable_total_brl | get_order_payments, get_payment_timeline, get_refund_timeline | payment_analysis, dữ liệu đầu vào cho financial_resolution |
+| Policy | 	policy_version, kết quả 3 specialist | Áp business rule chọn primary_issue/case_status, giải quyết source conflict, tính resolution_actions | get_policy | assessment, root_cause_analysis, data_conflicts, resolution_actions |
+| Conflict resolver | Evidence mâu thuẫn giữa các specialist | Chọn selected_source theo thứ tự ưu tiên, ghi resolution_code | (không gọi thêm MCP, chỉ dùng evidence đã thu thập trong case) | data_conflicts[] |
+| Verifier | Output nháp + toàn bộ evidence_refs đã thu thập | Kiểm schema, entity scope, evidence ownership, claim linkage, timeline, payment totals, confidence bounds | (không gọi MCP, chỉ đọc lại evidence trong bộ nhớ case) | verification_completed; nếu fail → trả case cho Coordinator để re-investigate |
 
 Áp dụng least privilege; tool discovery không đồng nghĩa mọi actor đều được gọi mọi tool.
 
@@ -54,7 +54,7 @@ Mô tả cách validate MCP response, lưu `evidence_ref`, chọn source theo po
 
 | Failure | Retry budget | Fallback | Trace event/code |
 | --- | ---: | --- | --- |
-| MCP timeout | TODO | TODO | TODO |
+| MCP timeout | 1 lần | Domain đó đặt insufficient_evidence; timeline_complete=false nếu là shipment | Không emit tool_result_consumed nếu vẫn fail; ghi nhận trong assessment.secondary_issues |
 | Entity not found/ambiguous | TODO | TODO | TODO |
 | Source conflict | TODO | TODO | TODO |
 | Invalid specialist result | TODO | TODO | TODO |
