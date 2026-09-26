@@ -1,3 +1,8 @@
+"""Chạy 1 lần để in ra input schema thật của từng MCP tool.
+
+Cách chạy (từ root repo, venv đã active):
+    python dump_tool_schemas.py
+"""
 from __future__ import annotations
 
 import asyncio
@@ -46,10 +51,18 @@ async def main() -> None:
             print("=" * 60)
             print(tool_name, args)
             try:
-                evidence = await gateway.call(tool_name, case_id=CASE_ID, **args)
-                print(json.dumps(evidence, indent=2, ensure_ascii=False))
+                raw = await gateway._session.call_tool(  # noqa: SLF001
+                    tool_name, arguments={"case_id": CASE_ID, **args}
+                )
+                print("is_error:", getattr(raw, "is_error", getattr(raw, "isError", None)))
+                for block in raw.content:
+                    print("content block:", repr(block))
+                structured = getattr(raw, "structuredContent", None) or getattr(
+                    raw, "structured_content", None
+                )
+                print("structuredContent:", structured)
             except Exception as exc:  # noqa: BLE001
-                print(f"ERROR: {exc}")
+                print(f"TRANSPORT ERROR: {type(exc).__name__}: {exc}")
 
 
 if __name__ == "__main__":
