@@ -16,15 +16,38 @@ class EvidenceGateway:
     def __init__(self, session: ClientSession, contracts: Contracts) -> None:
         self._session = session
         self._contracts = contracts
+        self._tool_definitions: list[dict[str, Any]] | None = None
 
     async def list_tools(self) -> list[str]:
         response = await self._session.list_tools()
         return sorted(tool.name for tool in response.tools)
 
+    async def list_tool_definitions(self) -> list[dict[str, Any]]:
+        """Return the public MCP tool metadata needed to build safe calls."""
+        if self._tool_definitions is not None:
+            return self._tool_definitions
+        response = await self._session.list_tools()
+        definitions = []
+        for tool in response.tools:
+            schema = getattr(tool, "inputSchema", None)
+            if schema is None:
+                schema = getattr(tool, "input_schema", {})
+            if hasattr(schema, "model_dump"):
+                schema = schema.model_dump()
+            definitions.append(
+                {
+                    "name": tool.name,
+                    "description": getattr(tool, "description", None) or "",
+                    "input_schema": schema,
+                }
+            )
+        self._tool_definitions = sorted(definitions, key=lambda tool: tool["name"])
+        return self._tool_definitions
+
     async def call(self, tool_name: str, *, case_id: str, **arguments: str) -> dict[str, Any]:
         payload = {"case_id": case_id, **arguments}
         result = await self._session.call_tool(tool_name, arguments=payload)
-        if result.isError:
+        if getattr(result, "is_error", getattr(result, "isError", False)):
             message = " ".join(
                 block.text for block in result.content if getattr(block, "text", None)
             )
