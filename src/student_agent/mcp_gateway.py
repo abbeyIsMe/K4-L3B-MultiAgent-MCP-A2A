@@ -8,6 +8,7 @@ from typing import Any
 import httpx2
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+from mcp.types import TextContent
 
 from .contracts import Contracts
 
@@ -21,22 +22,30 @@ class EvidenceGateway:
         response = await self._session.list_tools()
         return sorted(tool.name for tool in response.tools)
 
-    async def call(self, tool_name: str, *, case_id: str, **arguments: str) -> dict[str, Any]:
+    async def call(self, tool_name: str, *, case_id: str, **arguments: Any) -> dict[str, Any]:
         payload = {"case_id": case_id, **arguments}
         result = await self._session.call_tool(tool_name, arguments=payload)
-        if result.isError:
+        
+        # Kiểm tra is_error từ MCP Server
+        if getattr(result, "is_error", getattr(result, "isError", False)):
             message = " ".join(
-                block.text for block in result.content if getattr(block, "text", None)
+                block.text for block in result.content if isinstance(block, TextContent)
             )
             raise RuntimeError(f"MCP tool {tool_name} failed: {message or 'unknown error'}")
+            
         evidence = getattr(result, "structuredContent", None)
         if evidence is None:
             evidence = getattr(result, "structured_content", None)
+            
         if evidence is None:
-            text_blocks = [block.text for block in result.content if getattr(block, "text", None)]
+            # Lọc block.text an toàn chỉ trên các đối tượng TextContent
+            text_blocks = [
+                block.text for block in result.content if isinstance(block, TextContent)
+            ]
             if len(text_blocks) != 1:
                 raise ValueError(f"MCP tool {tool_name} did not return one evidence object")
             evidence = json.loads(text_blocks[0])
+            
         self._contracts.validate_evidence(evidence, f"MCP tool {tool_name}")
         return evidence
 

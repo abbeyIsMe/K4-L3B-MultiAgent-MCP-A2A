@@ -34,3 +34,6 @@ dist/*
 .vscode/
 .DS_Store
 Thumbs.db
+case-set.json
+case-set.json
+inputs/*.json

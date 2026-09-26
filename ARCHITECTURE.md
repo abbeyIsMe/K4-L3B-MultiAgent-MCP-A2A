@@ -7,9 +7,24 @@ Team phải cập nhật tài liệu này cùng source. Mục tiêu là mô tả
 Vẽ hoặc mô tả luồng từ input/candidate resolution đến MCP investigation, specialist agents, conflict resolver, verifier, output và trace.
 
 ```text
-Input → Entity Resolver → Coordinator → Specialists → Conflict Resolver → Verifier → Output
-            │                              │                  │             │
-            └──────────────────────────── MCP ────────────────┴──────────── Trace
+
+                                    Coordinator
+                                        |
+         _______________________________|_________________________________
+         |                               |                              |
+   Order Agent                      Payment Agent                 Shipment Agent
+        │                                  |                            |
+        └────────────────────────────────────────────────────────────────
+                                  MCP Evidence Collector
+                                            |
+                                            |
+                                        Policy Agent
+                                            |
+                                            |
+                                        Verifer Agent
+                                            |
+                                            |
+                                        End output
 ```
 
 ## 2. Agent ownership
